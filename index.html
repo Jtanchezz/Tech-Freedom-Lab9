@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Interactivo: Despliegue de Token ERC20 con Comisión (Sepolia)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-subtle: #f1f5f9;
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e1;
+            
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --primary-hover: #1d4ed8;
+            
+            --success: #10b981;
+            --success-bg: #ecfdf5;
+            --success-border: #a7f3d0;
+            
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --text-light: #64748b;
+            
+            --code-bg: #1e293b;
+            --code-text: #f8fafc;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 60px;
+        }
+
+        /* Header Bar */
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 24px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .brand-title h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        .brand-title p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .badge-status {
+            background-color: var(--success-bg);
+            color: #047857;
+            border: 1px solid var(--success-border);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-status .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Hero KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin: 32px 0;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-hover);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary);
+        }
+
+        .kpi-card.success::before {
+            background: var(--success);
+        }
+
+        .kpi-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+            word-break: break-all;
+        }
+
+        .kpi-sub {
+            font-size: 0.825rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Navigation Tabs */
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 32px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Search Bar & Controls */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            background-color: var(--bg-card);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        /* Timeline / Steps Interactive Accordion */
+        .step-accordion {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .step-item {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .step-item:hover {
+            border-color: var(--border-hover);
+        }
+
+        .step-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            background-color: var(--bg-card);
+            transition: background-color 0.2s ease;
+        }
+
+        .step-header:hover {
+            background-color: var(--bg-subtle);
+        }
+
+        .step-title-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .step-title h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .step-title p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .step-toggle-icon {
+            color: var(--text-light);
+            transition: transform 0.3s ease;
+        }
+
+        .step-item.open .step-toggle-icon {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+
+        .step-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+            border-top: 0 solid var(--border-color);
+            background-color: #fafbfc;
+        }
+
+        .step-item.open .step-body {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in-out;
+            border-top-width: 1px;
+            padding: 24px;
+        }
+
+        /* Code Box */
+        .code-container {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            position: relative;
+            margin: 14px 0;
+            overflow-x: auto;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .code-container code {
+            display: block;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .btn-copy {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-copy:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Callout Box */
+        .callout {
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border-left: 4px solid var(--primary);
+            background-color: var(--primary-light);
+            color: #1e40af;
+            font-size: 0.9rem;
+            margin-top: 14px;
+        }
+
+        .callout.success {
+            border-left-color: var(--success);
+            background-color: var(--success-bg);
+            color: #065f46;
+        }
+
+        /* Tables */
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-card);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin: 16px 0;
+        }
+
+        .custom-table th, .custom-table td {
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .custom-table th {
+            background-color: var(--bg-subtle);
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .custom-table td {
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .custom-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* Interactive Fee Simulator Widget */
+        .interactive-card {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            margin: 28px 0;
+            box-shadow: var(--shadow-md);
+        }
+
+        .sim-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .sim-input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .sim-input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .sim-result-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sim-result-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .sim-result-val {
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sim-result-val.green {
+            color: var(--success);
+        }
+
+        .sim-result-val.blue {
+            color: var(--primary);
+        }
+
+        /* Buttons & External Links */
+        .btn-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-link:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        /* Toast Alert */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: var(--text-main);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="header">
+        <div class="container header-content">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-cubes"></i>
+                </div>
+                <div class="brand-title">
+                    <h1>Reporte del Proyecto: FeeToken (FEE)</h1>
+                    <p>Despliegue, Verificación y Pruebas en Ethereum Sepolia Testnet</p>
+                </div>
+            </div>
+            <div>
+                <span class="badge-status">
+                    <span class="dot"></span> 100% Desplegado y Verificado
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- KPI Summary Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card success">
+                <div class="kpi-label">
+                    <span>Estado del Contrato</span>
+                    <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
+                </div>
+                <div class="kpi-value">Verificado OK</div>
+                <div class="kpi-sub">Etherscan & Sourcify</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">
+                    <span>Token Symbol & Supply</span>
+                    <i class="fa-solid fa-coins" style="color: var(--primary);"></i>
+                </div>
+                <div class="kpi-value">1,000,000 FEE</div>
+                <div class="kpi-sub">Comisión por Transacción: 1%</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">
+                    <span>Red Blockchain</span>
+                    <i class="fa-solid fa-network-wired" style="color: #8b5cf6;"></i>
+                </div>
+                <div class="kpi-value">Ethereum Sepolia</div>
+                <div class="kpi-sub">Chain ID: 11155111</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">
+                    <span>Prueba de Comisión</span>
+                    <i class="fa-solid fa-vial-circle-check" style="color: #f59e0b;"></i>
+                </div>
+                <div class="kpi-value">Exitosa (Status 1)</div>
+                <div class="kpi-sub">99 FEE Recibidos / 1 FEE Fee</div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs-nav">
+            <button class="tab-button active" onclick="switchTab('resumen')">
+                <i class="fa-solid fa-gauge-high"></i> Vista General
+            </button>
+            <button class="tab-button" onclick="switchTab('pasos')">
+                <i class="fa-solid fa-list-check"></i> Pasos del Proceso (Pasos Exitosos)
+            </button>
+            <button class="tab-button" onclick="switchTab('direcciones')">
+                <i class="fa-solid fa-wallet"></i> Contrato y Billeteras
+            </button>
+            <button class="tab-button" onclick="switchTab('simulador')">
+                <i class="fa-solid fa-calculator"></i> Simulador de Comisión
+            </button>
+        </div>
+
+        <!-- TAB 1: VISTA GENERAL -->
+        <div id="tab-resumen" class="tab-content active">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 16px;">Resumen Ejecutivo</h2>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">
+                El proyecto consiste en el desarrollo, prueba, despliegue, importación en billetera y verificación pública del smart contract <strong>FeeToken (FEE)</strong>. El contrato es un token estándar ERC20 que incorpora un mecanismo de comisión del <strong>1%</strong> sobre cada transferencia realizada, enviando automáticamente el 99% al destinatario y reteniendo el 1% para la cuenta asignada.
+            </p>
+
+            <div class="interactive-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">
+                    <i class="fa-solid fa-bullseye" style="color: var(--primary);"></i> Hitología Técnica Alcanzada
+                </h3>
+                <ul style="padding-left: 20px; color: var(--text-muted); font-size: 0.95rem; display: flex; flex-direction: column; gap: 8px;">
+                    <li><strong>Despliegue Automatizado con Foundry:</strong> Compilado e instanciado en la red de pruebas Sepolia sin fallas.</li>
+                    <li><strong>Integración Multibilletera:</strong> Importado con éxito en MetaMask mostrando la provisión inicial de 1,000,000 FEE.</li>
+                    <li><strong>Transparencia Pública:</strong> Código fuente verificado públicamente en Sepolia Etherscan con los argumentos ABI codificados.</li>
+                    <li><strong>Validación On-Chain:</strong> Transferencia CLI ejecutada con <code>cast send</code> confirmando la deducción exacta del 1% mediante eventos de registro.</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 32px;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;">Enlaces Rápidos de Verificación</h3>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <a href="https://sepolia.etherscan.io/address/0xb6b98bb45f775da482c56dec71FD75513a5eB7bD#code" target="_blank" class="btn-link">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Contrato Verificado en Etherscan
+                    </a>
+                    <a href="https://sepolia.etherscan.io/tx/0xa74da2bb240b8cedfb5caae0fbb221272d928effcadd77caf7369c0aa7b8ef97" target="_blank" class="btn-link">
+                        <i class="fa-solid fa-receipt"></i> Ver Transacción de Prueba (Hash)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: PASOS DEL PROCESO -->
+        <div id="tab-pasos" class="tab-content">
+            <div class="controls-row">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="stepSearch" onkeyup="filterSteps()" placeholder="Buscar comandos, conceptos o pasos (ej. cast, verify, metamask)...">
+                </div>
+                <button onclick="toggleAllSteps()" class="btn-link" style="cursor: pointer;">
+                    <i class="fa-solid fa-folder-open"></i> Expandir/Colapsar Todos
+                </button>
+            </div>
+
+            <div class="step-accordion" id="accordionContainer">
+
+                <!-- Paso 1 -->
+                <div class="step-item open">
+                    <div class="step-header" onclick="toggleStep(this)">
+                        <div class="step-title-group">
+                            <div class="step-number">1</div>
+                            <div class="step-title">
+                                <h3>Configuración del Entorno y Billetera en Foundry</h3>
+                                <p>Inicialización de variables de entorno (.env) y preparación de cuenta</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down step-toggle-icon"></i>
+                    </div>
+                    <div class="step-body">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">
+                            Se configuró el entorno local de desarrollo utilizando el framework **Foundry**. Se declararon las variables clave en el archivo <code>.env</code> asegurando que la clave privada tuviera el prefijo adecuado <code>0x</code> y la URL RPC apuntara correctamente a Sepolia.
+                        </p>
+                        <div class="code-container">
+                            <button class="btn-copy" onclick="copyCode(this)">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                            <code># Configuración del archivo .env
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/...
+PRIVATE_KEY=0x4c7... (Clave privada con prefijo 0x)
+ETHERSCAN_API_KEY=AFV6ZYBD67BN4PR5FXUBD58MSSYBG3GDWK</code>
+                        </div>
+                        <div class="callout">
+                            <strong>Resultado:</strong> Billetera del desarrollador (<code>0x4c7499C690d9621A124a3d337AD8a144E64F212a</code>) vinculada con un saldo de 0.05 SepoliaETH para pagar el gas.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 2 -->
+                <div class="step-item open">
+                    <div class="step-header" onclick="toggleStep(this)">
+                        <div class="step-title-group">
+                            <div class="step-number">2</div>
+                            <div class="step-title">
+                                <h3>Compilación del Contrato Inteligente FeeToken</h3>
+                                <p>Implementación de la lógica del 1% de comisión ERC20</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down step-toggle-icon"></i>
+                    </div>
+                    <div class="step-body">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">
+                            Se escribió el código Solidity del contrato <code>src/Token.sol:Token</code>. El constructor requiere un parámetro de tipo <code>address</code> que especifica el dueño/receptor inicial.
+                        </p>
+                        <div class="code-container">
+                            <button class="btn-copy" onclick="copyCode(this)">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                            <code># Compilación del contrato con Foundry
+forge build</code>
+                        </div>
+                        <div class="callout success">
+                            <strong>Resultado:</strong> Bytecode y ABI generados exitosamente sin errores de compilación.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 3 -->
+                <div class="step-item open">
+                    <div class="step-header" onclick="toggleStep(this)">
+                        <div class="step-title-group">
+                            <div class="step-number">3</div>
+                            <div class="step-title">
+                                <h3>Despliegue Broadcasted en Sepolia Testnet</h3>
+                                <p>Publicación del contrato en vivo mediante forge script</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down step-toggle-icon"></i>
+                    </div>
+                    <div class="step-body">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">
+                            Se envió la transacción de despliegue a la blockchain de prueba Sepolia pasando el constructor con la dirección del desplegador.
+                        </p>
+                        <div class="callout success">
+                            <strong>Dirección del Contrato Creado:</strong><br>
+                            <span class="mono" style="font-weight: 700;">0xB6b98BB45F775dA482c56dec71FD75513a5eB7bD</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 4 -->
+                <div class="step-item open">
+                    <div class="step-header" onclick="toggleStep(this)">
+                        <div class="step-title-group">
+                            <div class="step-number">4</div>
+                            <div class="step-title">
+                                <h3>Importación de Token FEE en Billetera MetaMask</h3>
+                                <p>Visualización del balance inicial de tokens</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down step-toggle-icon"></i>
+                    </div>
+                    <div class="step-body">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">
+                            Se habilitó la red Sepolia en MetaMask ("Mostrar redes de prueba") y se importó el token usando la dirección del contrato.
+                        </p>
+                        <div class="callout">
+                            <strong>Resultado Visual:</strong> Balance de **1,000,000 FEE** reflejado correctamente en la billetera.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 5 -->
+                <div class="step-item open">
+                    <div class="step-header" onclick="toggleStep(this)">
+                        <div class="step-title-group">
+                            <div class="step-number">5</div>
+                            <div class="step-title">
+                                <h3>Verificación de Código Fuente en Etherscan</h3>
+                                <p>Generación de API Key y publicación de código fuente auditables</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down step-toggle-icon"></i>
+                    </div>
+                    <div class="step-body">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">
+                            Se generó una API Key en Etherscan (`AFV6ZYBD67BN4PR5FXUBD58MSSYBG3GDWK`) y se ejecutó la verificación enviando los argumentos codificados del constructor.
+                        </p>
+                        <div class="code-container">
+                            <button class="btn-copy" onclick="copyCode(this)">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                            <code>forge verify-contract   0xB6b98BB45F775dA482c56dec71FD75513a5eB7bD   src/Token.sol:Token   --chain sepolia   --etherscan-api-key AFV6ZYBD67BN4PR5FXUBD58MSSYBG3GDWK   --constructor-args $(cast abi-encode "constructor(address)" 0x4c7499C690d9621A124a3d337AD8a144E64F212a)</code>
+                        </div>
+                        <div class="callout success">
+                            <strong>Respuesta de Etherscan:</strong> <code>OK</code> | GUID: <code>yxvmjchw3q8ryrlipm9h6fdxwkejteikuhw4wcn5bkqpm3d98k</code><br>
+                            <strong>Respuesta de Sourcify:</strong> Verified | Job ID: <code>53b30925-b812-46a8-8701-f0c466f4af0e</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 6 -->
+                <div class="step-item open">
+                    <div class="step-header" onclick="toggleStep(this)">
+                        <div class="step-title-group">
+                            <div class="step-number">6</div>
+                            <div class="step-title">
+                                <h3>Prueba On-Chain de Transferencia y Deducción del 1%</h3>
+                                <p>Ejecución de cast send y validación de eventos emitidos</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down step-toggle-icon"></i>
+                    </div>
+                    <div class="step-body">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">
+                            Se envió una prueba de transferencia por **100 FEE** (100000000000000000000 wei) a la dirección de prueba <code>0x5F2e434f1D4DA4a4bED81e9c108364614D60ce10</code>.
+                        </p>
+                        <div class="code-container">
+                            <button class="btn-copy" onclick="copyCode(this)">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                            <code>cast send 0xB6b98BB45F775dA482c56dec71FD75513a5eB7bD   "transfer(address,uint256)" 0x5F2e434f1D4DA4a4bED81e9c108364614D60ce10 100000000000000000000   --rpc-url $SEPOLIA_RPC_URL   --private-key $PRIVATE_KEY</code>
+                        </div>
+                        <div class="callout success">
+                            <strong>Confirmación Blockchain:</strong> Status <code>1 (success)</code> | Block Number: <code>11656304</code><br>
+                            <strong>Monto Entregado al Destinatario:</strong> 99 FEE (0x55de6a779bbac0000)<br>
+                            <strong>Monto Retenido de Comisión (1%):</strong> 1 FEE (0x0de0b6b3a7640000)
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 3: DIRECCIONES Y REGISTRO -->
+        <div id="tab-direcciones" class="tab-content">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 16px;">Registro de Direcciones y Parámetros</h2>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">
+                Copia o verifica fácilmente cada una de las entidades y parámetros utilizados durante el despliegue y pruebas.
+            </p>
+
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Entidad</th>
+                        <th>Dirección / Hash</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Smart Contract (FeeToken)</strong></td>
+                        <td class="mono">0xB6b98BB45F775dA482c56dec71FD75513a5eB7bD</td>
+                        <td>
+                            <button class="btn-link" onclick="copyText('0xB6b98BB45F775dA482c56dec71FD75513a5eB7bD')">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Billetera Desplegadora / Owner</strong></td>
+                        <td class="mono">0x4c7499C690d9621A124a3d337AD8a144E64F212a</td>
+                        <td>
+                            <button class="btn-link" onclick="copyText('0x4c7499C690d9621A124a3d337AD8a144E64F212a')">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Billetera Destino de Pruebas</strong></td>
+                        <td class="mono">0x5F2e434f1D4DA4a4bED81e9c108364614D60ce10</td>
+                        <td>
+                            <button class="btn-link" onclick="copyText('0x5F2e434f1D4DA4a4bED81e9c108364614D60ce10')">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hash Transacción de Prueba</strong></td>
+                        <td class="mono">0xa74da2bb240b8cedfb5caae0fbb221272d928effcadd77caf7369c0aa7b8ef97</td>
+                        <td>
+                            <button class="btn-link" onclick="copyText('0xa74da2bb240b8cedfb5caae0fbb221272d928effcadd77caf7369c0aa7b8ef97')">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- TAB 4: SIMULADOR INTERACTIVO DE COMISIONES -->
+        <div id="tab-simulador" class="tab-content">
+            <div class="interactive-card">
+                <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">Simulador de Comisión (1% Fee)</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    Introduce cualquier cantidad de tokens FEE para simular cómo los distribuirá el contrato en tiempo real.
+                </p>
+
+                <div class="sim-grid">
+                    <div class="sim-input-group">
+                        <label for="montoInput"><i class="fa-solid fa-money-bill-transfer"></i> Monto a Transferir (FEE):</label>
+                        <input type="number" id="montoInput" value="100" min="1" oninput="calcularComision()">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="sim-result-box">
+                            <span class="sim-result-label">Destinatario Recibe (99%):</span>
+                            <span class="sim-result-val green" id="resMontoDestino">99.00 FEE</span>
+                        </div>
+                        <div class="sim-result-box">
+                            <span class="sim-result-label">Comisión Retenida (1%):</span>
+                            <span class="sim-result-val blue" id="resMontoFee">1.00 FEE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
+        <span id="toastMessage">Texto copiado al portapapeles</span>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>Reporte de Proyecto Generado Automáticamente • Ethereum Sepolia Testnet • Foundry Suite</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Interactivo -->
+    <script>
+        // Tab switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // Accordion Toggle
+        function toggleStep(header) {
+            const stepItem = header.parentElement;
+            stepItem.classList.toggle('open');
+        }
+
+        function toggleAllSteps() {
+            const items = document.querySelectorAll('.step-item');
+            const anyClosed = Array.from(items).some(item => !item.classList.contains('open'));
+            
+            items.forEach(item => {
+                if (anyClosed) {
+                    item.classList.add('open');
+                } else {
+                    item.classList.remove('open');
+                }
+            });
+        }
+
+        // Filter Steps
+        function filterSteps() {
+            const input = document.getElementById('stepSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.step-item');
+
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                if (text.includes(input)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Copy Functions & Toast
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('¡Copiado: ' + text.substring(0, 10) + '...!');
+            });
+        }
+
+        function copyCode(btn) {
+            const code = btn.parentElement.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('¡Comando copiado al portapapeles!');
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // Calculator Logic
+        function calcularComision() {
+            const val = parseFloat(document.getElementById('montoInput').value) || 0;
+            const fee = val * 0.01;
+            const neto = val - fee;
+
+            document.getElementById('resMontoDestino').innerText = neto.toFixed(2) + ' FEE';
+            document.getElementById('resMontoFee').innerText = fee.toFixed(2) + ' FEE';
+        }
+    </script>
+</body>
+</html>
